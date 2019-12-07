@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"net/http"
 	"strconv"
 
@@ -68,12 +69,17 @@ type PubKeyResponse struct {
 }
 
 func PubKeyHandler(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Printf("::%s:: keys.go: PubKeyHandler \n", os.Args[2][len(os.Args[2])-4:])
+
 	A, err := crypto.GetPubKey(crypto.KeyTypeA)
 	if err != nil {
 		logging.Error.Println("PubKeyHandler", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	fmt.Printf("::%s:: keys.go: PubKeyHandler: A: %x \n", os.Args[2][len(os.Args[2])-4:], A)
 
 	response := PubKeyResponse{
 		A: hex.EncodeToString(A[:]),

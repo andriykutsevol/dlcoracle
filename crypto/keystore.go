@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/adiabat/btcd/btcec"
 
@@ -61,10 +62,14 @@ func RetrieveKey(keyType KeyType) *[32]byte {
 }
 
 func GetPubKey(keyType KeyType) (*[33]byte, error) {
+
 	result := new([33]byte)
 	key := RetrieveKey(keyType)
 	_, pubKey := btcec.PrivKeyFromBytes(btcec.S256(), key[:])
-	key = nil
+	//key = nil		!!! uncomment this
 	copy(result[:], pubKey.SerializeCompressed()[:])
+
+	fmt.Printf("::%s:: keystore.go: GetPubKey(): key: %x, pubKey: %x \n", os.Args[2][len(os.Args[2])-4:], key, result)
+
 	return result, nil
 }

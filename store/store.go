@@ -8,6 +8,8 @@ import (
 	"time"
 	"path/filepath"
 
+	"os"
+
 
 	"github.com/adiabat/btcd/btcec"
 	"github.com/boltdb/bolt"
@@ -40,9 +42,16 @@ func Init() error {
 }
 
 func GetRPoint(datasourceId, timestamp uint64) ([33]byte, error) {
+
+
+	fmt.Printf("::%s:: store.go: ====GetRPoint()==== \n", os.Args[2][len(os.Args[2])-4:])
+
 	var pubKey [33]byte
 
 	privKey, err := GetK(datasourceId, timestamp)
+
+	fmt.Printf("::%s:: store.go: GetRPoint(): privKey: %x \n", os.Args[2][len(os.Args[2])-4:], privKey)
+
 	if err != nil {
 		logging.Error.Print(err)
 		return pubKey, err
@@ -51,24 +60,38 @@ func GetRPoint(datasourceId, timestamp uint64) ([33]byte, error) {
 	_, pk := btcec.PrivKeyFromBytes(btcec.S256(), privKey[:])
 
 	copy(pubKey[:], pk.SerializeCompressed())
+	
+	fmt.Printf("::%s:: store.go: GetRPoint(): pubKey: %x \n", os.Args[2][len(os.Args[2])-4:], pubKey)
+	fmt.Printf("::%s:: store.go: ---GetRPoint--- \n", os.Args[2][len(os.Args[2])-4:])
+	
 	return pubKey, nil
 }
 
 func GetK(datasourceId, timestamp uint64) ([32]byte, error) {
+
+	fmt.Printf("::%s:: store.go: ====GetK()==== \n", os.Args[2][len(os.Args[2])-4:])
+
 	var privKey [32]byte
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("Keys"))
 		key := makeStorageKey(datasourceId, timestamp)
 
+		fmt.Printf("::%s:: store.go: GetK(): key: %x \n", os.Args[2][len(os.Args[2])-4:], key)
+
 		priv := b.Get(key)
+
+		fmt.Printf("::%s:: store.go: GetK(): priv: %x \n", os.Args[2][len(os.Args[2])-4:], priv)
+
 		if priv == nil {
 			_, err := rand.Read(privKey[:])
 			if err != nil {
 				return err
 			}
 			err = b.Put(key, privKey[:])
+			fmt.Printf("::%s:: store.go: GetK() rand.Read(privKey): %x \n", os.Args[2][len(os.Args[2])-4:], privKey)
 			return err
 		} else {
+			fmt.Printf("::%s:: store.go: GetK() b.Get(key): %x \n", os.Args[2][len(os.Args[2])-4:], priv)
 			copy(privKey[:], priv)
 		}
 		return nil
@@ -78,11 +101,17 @@ func GetK(datasourceId, timestamp uint64) ([32]byte, error) {
 		logging.Error.Print(err)
 		return privKey, err
 	}
+
+	fmt.Printf("::%s:: store.go: ---GetK--- \n", os.Args[2][len(os.Args[2])-4:])
+
 	return privKey, nil
 }
 
 func Publish(rPoint [33]byte, value uint64, signature [32]byte) error {
 	err := db.Update(func(tx *bolt.Tx) error {
+
+		fmt.Printf("::%s:: store.go: ====Publish()==== \n", os.Args[2][len(os.Args[2])-4:])
+
 		b := tx.Bucket([]byte("Publications"))
 
 		v := b.Get(rPoint[:])
@@ -94,6 +123,9 @@ func Publish(rPoint [33]byte, value uint64, signature [32]byte) error {
 		binary.Write(&buf, binary.BigEndian, value)
 		buf.Write(signature[:])
 
+
+		fmt.Printf("::%s:: store.go: Publish() rPoint: %x, buf.Bytes(): %x \n", os.Args[2][len(os.Args[2])-4:], rPoint, buf.Bytes())
+
 		err := b.Put(rPoint[:], buf.Bytes())
 		return err
 	})
@@ -102,6 +134,8 @@ func Publish(rPoint [33]byte, value uint64, signature [32]byte) error {
 		logging.Error.Print(err)
 		return err
 	}
+
+	fmt.Printf("::%s:: store.go: ---Publish--- \n", os.Args[2][len(os.Args[2])-4:])
 
 	return nil
 }
@@ -127,6 +161,10 @@ func IsPublished(rPoint [33]byte) (bool, error) {
 }
 
 func GetPublication(rPoint [33]byte) (uint64, [32]byte, error) {
+
+
+	fmt.Printf("::%s:: store.go: ====GetPublication()==== \n", os.Args[2][len(os.Args[2])-4:])
+
 	value := uint64(0)
 	signature := [32]byte{}
 
@@ -137,6 +175,8 @@ func GetPublication(rPoint [33]byte) (uint64, [32]byte, error) {
 			return fmt.Errorf("Publication not found")
 		}
 
+		fmt.Printf("::%s:: store.go: GetPublication(): rPoint: %x, v: %x \n", os.Args[2][len(os.Args[2])-4:], rPoint, v)
+
 		buf := bytes.NewBuffer(v)
 
 		err := binary.Read(buf, binary.BigEndian, &value)
@@ -144,6 +184,11 @@ func GetPublication(rPoint [33]byte) (uint64, [32]byte, error) {
 			return err
 		}
 		copy(signature[:], buf.Next(32))
+
+		fmt.Printf("::%s:: store.go: GetPublication(), buf.Bytes(): %x, signature: %x, value: %d \n", 
+		os.Args[2][len(os.Args[2])-4:], buf.Bytes(), signature, value)	
+
+
 		return nil
 	})
 
@@ -151,6 +196,9 @@ func GetPublication(rPoint [33]byte) (uint64, [32]byte, error) {
 		logging.Error.Print(err)
 		return 0, [32]byte{}, err
 	}
+
+
+	fmt.Printf("::%s:: store.go: ---GetPublication--- \n", os.Args[2][len(os.Args[2])-4:])
 
 	return value, signature, nil
 }

@@ -5,6 +5,9 @@ import (
 	"encoding/binary"
 	"time"
 
+	"fmt"
+	"os"
+
 	"github.com/gertjaap/dlcoracle/datasources"
 
 	"github.com/gertjaap/dlcoracle/crypto"
@@ -32,6 +35,8 @@ func Process() error {
 		for _, ds := range datasources.GetAllDatasources() {
 			if time%ds.Interval() == 0 {
 
+				fmt.Printf("::%s:: publisher.go: ================================================== \n", os.Args[2][len(os.Args[2])-4:])
+
 				logging.Info.Printf("Publishing data source %d [ts: %d]\n", ds.Id(), time)
 
 				valueToPublish, err := ds.Value()
@@ -43,17 +48,23 @@ func Process() error {
 				var a [32]byte
 				copy(a[:], crypto.RetrieveKey(crypto.KeyTypeA)[:])
 
+				fmt.Printf("::%s:: publisher.go: a: %x \n", os.Args[2][len(os.Args[2])-4:], a)
+
+
 				k, err := store.GetK(ds.Id(), time)
 				if err != nil {
 					logging.Error.Printf("Could not get signing key for data source %d and timestamp %d : %s", ds.Id(), time, err.Error())
 					continue
 				}
+				fmt.Printf("::%s:: publisher.go: k: %x \n", os.Args[2][len(os.Args[2])-4:], k)
+
 
 				R, err := store.GetRPoint(ds.Id(), time)
 				if err != nil {
 					logging.Error.Printf("Could not get pubkey for data source %d and timestamp %d : %s", ds.Id(), time, err.Error())
 					continue
 				}
+				fmt.Printf("::%s:: publisher.go: R: %x \n", os.Args[2][len(os.Args[2])-4:], R)
 
 				publishedAlready, err := store.IsPublished(R)
 				if err != nil {
@@ -78,6 +89,8 @@ func Process() error {
 					logging.Error.Printf("Could not sign the message: %s", err.Error())
 					continue
 				}
+
+				fmt.Printf("::%s:: publisher.go: signature: %x, valueToPublish: %d \n", os.Args[2][len(os.Args[2])-4:], signature, valueToPublish)
 
 				store.Publish(R, valueToPublish, signature)
 			}
