@@ -76,7 +76,7 @@ func GetK(datasourceId, timestamp uint64) ([32]byte, error) {
 		b := tx.Bucket([]byte("Keys"))
 		key := makeStorageKey(datasourceId, timestamp)
 
-		fmt.Printf("::%s:: store.go: GetK(): key: %x \n", os.Args[2][len(os.Args[2])-4:], key)
+		fmt.Printf("::%s:: store.go: GetK(): timestamp: %d, datasourceId: %d, key: %x \n", os.Args[2][len(os.Args[2])-4:], timestamp, datasourceId, key)
 
 		priv := b.Get(key)
 

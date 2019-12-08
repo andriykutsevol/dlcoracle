@@ -22,11 +22,12 @@ func Init() {
 	lastPublished = uint64(time.Now().Unix())
 
 	ticker := time.NewTicker(1 * time.Second)
-	go func() {
-		for range ticker.C {
-			Process()
-		}
-	}()
+	_ = ticker
+	// go func() {
+	// 	for range ticker.C {
+	// 		Process()
+	// 	}
+	// }()
 }
 
 func Process() error {
@@ -41,7 +42,7 @@ func Process() error {
 
 				valueToPublish, err := ds.Value()
 				if err != nil {
-					logging.Error.Printf("Could not retrieve value for data source %d: %s", ds.Id(), err.Error())
+					logging.Error.Printf("publisher.go: Could not retrieve value for data source %d: %s", ds.Id(), err.Error())
 					continue
 				}
 
