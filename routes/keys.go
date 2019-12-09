@@ -98,6 +98,9 @@ func RPointHandler(w http.ResponseWriter, r *http.Request) {
 		logging.Error.Printf("Could not sign the message: %s", err.Error())
 		return
 	}
+
+
+	fmt.Printf("::%s:: keys.go:RPointPubKeyHandler() rPoint: %x, signature: %x \n", os.Args[2][len(os.Args[2])-4:], rPoint, signature)
 	
 	store.Publish(rPoint, valueToPublish, signature)
 	

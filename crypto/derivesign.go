@@ -115,7 +115,8 @@ func computePrivKey(k, a [32]byte, msg []byte) ([32]byte, error) {
 	// e*a
 	bigS.Mul(bigE, bigPriv)
 	// k + (e*a)
-	bigS.Sub(bigK, bigS)
+	//bigS.Sub(bigK, bigS)
+	bigS.Sub(bigK, bigPriv)
 	bigS.Mod(bigS, curve.N)
 
 	// check if s is 0, and fail if it is.  Can't see how this would happen;
