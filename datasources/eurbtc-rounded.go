@@ -17,6 +17,12 @@ func (ds *EurBtcRounded) Id() uint64 {
 	return 2
 }
 
+
+func (ds *EurBtcRounded) DsType() DatasourceType {
+	return Price
+}
+
+
 func (ds *EurBtcRounded) Name() string {
 	return "Euro"
 }

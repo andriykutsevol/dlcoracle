@@ -26,61 +26,79 @@ func Init() {
 	}()
 }
 
+
+func ProcessPrice(ds datasources.Datasource, time uint64) error {
+
+
+	if time%ds.Interval() == 0 {
+
+		logging.Info.Printf("Publishing data source %d [ts: %d]\n", ds.Id(), time)
+
+		valueToPublish, err := ds.Value()
+		if err != nil {
+			logging.Error.Printf("Could not retrieve value for data source %d: %s", ds.Id(), err.Error())
+			return nil
+		}
+
+		var a [32]byte
+		copy(a[:], crypto.RetrieveKey(crypto.KeyTypeA)[:])
+
+		k, err := store.GetK(ds.Id(), time)
+		if err != nil {
+			logging.Error.Printf("Could not get signing key for data source %d and timestamp %d : %s", ds.Id(), time, err.Error())
+			return nil
+		}
+
+		R, err := store.GetRPoint(ds.Id(), time)
+		if err != nil {
+			logging.Error.Printf("Could not get pubkey for data source %d and timestamp %d : %s", ds.Id(), time, err.Error())
+			return nil
+		}
+
+		publishedAlready, err := store.IsPublished(R)
+		if err != nil {
+			logging.Error.Printf("Error determining if this is already published: %s", err.Error())
+			return nil
+		}
+
+		if publishedAlready {
+			logging.Info.Printf("Already published for data source %d and timestamp %d", ds.Id(), time)
+			return nil
+		}
+
+		// Zero pad the value before signing. Sign expects a [32]byte message
+		var buf bytes.Buffer
+		binary.Write(&buf, binary.BigEndian, uint64(0))
+		binary.Write(&buf, binary.BigEndian, uint64(0))
+		binary.Write(&buf, binary.BigEndian, uint64(0))
+		binary.Write(&buf, binary.BigEndian, valueToPublish)
+
+		signature, err := crypto.ComputeS(a, k, buf.Bytes())
+		if err != nil {
+			logging.Error.Printf("Could not sign the message: %s", err.Error())
+			return nil
+		}
+
+		store.Publish(R, valueToPublish, signature)
+	}
+
+
+
+	return nil
+}
+
+
+
+
 func Process() error {
 	timeNow := uint64(time.Now().Unix())
 	for time := lastPublished + 1; time <= timeNow; time++ {
 		for _, ds := range datasources.GetAllDatasources() {
-			if time%ds.Interval() == 0 {
 
-				logging.Info.Printf("Publishing data source %d [ts: %d]\n", ds.Id(), time)
-
-				valueToPublish, err := ds.Value()
-				if err != nil {
-					logging.Error.Printf("Could not retrieve value for data source %d: %s", ds.Id(), err.Error())
-					continue
-				}
-
-				var a [32]byte
-				copy(a[:], crypto.RetrieveKey(crypto.KeyTypeA)[:])
-
-				k, err := store.GetK(ds.Id(), time)
-				if err != nil {
-					logging.Error.Printf("Could not get signing key for data source %d and timestamp %d : %s", ds.Id(), time, err.Error())
-					continue
-				}
-
-				R, err := store.GetRPoint(ds.Id(), time)
-				if err != nil {
-					logging.Error.Printf("Could not get pubkey for data source %d and timestamp %d : %s", ds.Id(), time, err.Error())
-					continue
-				}
-
-				publishedAlready, err := store.IsPublished(R)
-				if err != nil {
-					logging.Error.Printf("Error determining if this is already published: %s", err.Error())
-					continue
-				}
-
-				if publishedAlready {
-					logging.Info.Printf("Already published for data source %d and timestamp %d", ds.Id(), time)
-					continue
-				}
-
-				// Zero pad the value before signing. Sign expects a [32]byte message
-				var buf bytes.Buffer
-				binary.Write(&buf, binary.BigEndian, uint64(0))
-				binary.Write(&buf, binary.BigEndian, uint64(0))
-				binary.Write(&buf, binary.BigEndian, uint64(0))
-				binary.Write(&buf, binary.BigEndian, valueToPublish)
-
-				signature, err := crypto.ComputeS(a, k, buf.Bytes())
-				if err != nil {
-					logging.Error.Printf("Could not sign the message: %s", err.Error())
-					continue
-				}
-
-				store.Publish(R, valueToPublish, signature)
+			if ds.DsType() == datasources.Price{
+				ProcessPrice(ds, time)
 			}
+
 		}
 	}
 

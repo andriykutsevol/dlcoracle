@@ -9,11 +9,17 @@ import (
 )
 
 type UsdBtcRoundedRandom struct {
+
 }
 
 func (ds *UsdBtcRoundedRandom) Id() uint64 {
 	return 1
 }
+
+func (ds *UsdBtcRoundedRandom) DsType() DatasourceType {
+	return Price
+}
+
 
 func (ds *UsdBtcRoundedRandom) Name() string {
 	return "US Dollar"
