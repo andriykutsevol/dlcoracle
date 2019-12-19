@@ -43,3 +43,21 @@ func random(min, max int) int {
 	rand.Seed(time.Now().Unix())
 	return rand.Intn(max-min) + min
 }
+
+
+
+func (ds *UsdBtcRoundedRandom) GetTxs() ([][]byte, error) {
+
+	return nil, nil
+}
+
+func (ds *UsdBtcRoundedRandom) SetTx(txid []byte) error {
+
+	return nil
+}
+
+
+func (ds *UsdBtcRoundedRandom) IsTxConfirmed(txid []byte) bool {
+
+	return true
+}

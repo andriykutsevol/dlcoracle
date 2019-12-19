@@ -63,6 +63,47 @@ func RPointHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(js)
 }
 
+//------------------------------------------------------------
+
+
+func EventRPointHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	datasourceId:= uint64(3)
+
+	txid, err := hex.DecodeString(vars["data"])
+
+
+	rPoint, err := store.GetEventRPoint(datasourceId, txid)
+	if err != nil {
+		logging.Error.Println("RPointPubKeyHandler", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := RPointResponse{
+		R: hex.EncodeToString(rPoint[:]),
+	}
+
+	js, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
+}
+
+
+
+
+//------------------------------------------------------------
+
+
+
+
+
 type PubKeyResponse struct {
 	A string
 }

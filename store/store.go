@@ -13,6 +13,9 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/gertjaap/dlcoracle/logging"
 	"github.com/gertjaap/dlcoracle/gcfg"
+
+	"github.com/gertjaap/dlcoracle/datasources"
+	"errors"
 )
 
 var db *bolt.DB
@@ -53,6 +56,82 @@ func GetRPoint(datasourceId, timestamp uint64) ([33]byte, error) {
 	copy(pubKey[:], pk.SerializeCompressed())
 	return pubKey, nil
 }
+
+
+//------------------------------------------------------
+
+func GetEventRPoint(datasourceId uint64, txid []byte) ([33]byte, error) {
+	var pubKey [33]byte
+
+	privKey, err := GetEventK(datasourceId, txid)
+	if err != nil {
+		logging.Error.Print(err)
+		return pubKey, err
+	}
+
+	//Todo. Reimplement this using correct design patterns/hierarchy of objects.
+	ds, err := datasources.GetDatasource(datasourceId)
+	if ds.DsType() != datasources.Event{
+		return pubKey, errors.New("GetEventRPoint: datasource type must to be Event")
+	}
+
+	txids, _ := ds.GetTxs()
+	isTxSet := false
+	for _, t := range txids {
+		if bytes.Compare(t,txid) == 0 {
+			isTxSet = true
+		} 
+	}	
+
+	if !isTxSet{
+		err = ds.SetTx(txid)
+		if err != nil {
+			return pubKey, err
+		}
+	}
+
+	_, pk := btcec.PrivKeyFromBytes(btcec.S256(), privKey[:])
+
+	copy(pubKey[:], pk.SerializeCompressed())
+	return pubKey, nil
+}
+
+
+//------------------------------------------------------
+
+
+func GetEventK(datasourceId uint64, txid []byte) ([32]byte, error) {
+	var privKey [32]byte
+	err := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Keys"))
+		key := makeStorageEventKey(datasourceId, txid)
+
+		priv := b.Get(key)
+		if priv == nil {
+			_, err := rand.Read(privKey[:])
+			if err != nil {
+				return err
+			}
+			err = b.Put(key, privKey[:])
+			return err
+		} else {
+			copy(privKey[:], priv)
+		}
+		return nil
+	})
+
+	if err != nil {
+		logging.Error.Print(err)
+		return privKey, err
+	}
+	return privKey, nil
+}
+
+
+
+//------------------------------------------------------
+
+
 
 func GetK(datasourceId, timestamp uint64) ([32]byte, error) {
 	var privKey [32]byte
@@ -158,6 +237,14 @@ func GetPublication(rPoint [33]byte) (uint64, [32]byte, error) {
 func makeStorageKey(datasourceId uint64, timestamp uint64) []byte {
 	var buf bytes.Buffer
 	binary.Write(&buf, binary.BigEndian, timestamp)
+	binary.Write(&buf, binary.BigEndian, datasourceId)
+	return buf.Bytes()
+}
+
+
+func makeStorageEventKey(datasourceId uint64, txid []byte) []byte {
+	var buf bytes.Buffer
+	buf.Write(txid)
 	binary.Write(&buf, binary.BigEndian, datasourceId)
 	return buf.Bytes()
 }

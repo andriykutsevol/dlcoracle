@@ -20,6 +20,11 @@ type Datasource interface {
 	Description() string
 	Value() (uint64, error)
 	Interval() uint64
+
+	//Todo. Reimplement this using correct design patterns.
+	GetTxs() ([][]byte, error)
+	SetTx([]byte) (error)
+	IsTxConfirmed([]byte) bool
 }
 
 func GetAllDatasources() []Datasource {

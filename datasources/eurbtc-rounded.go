@@ -62,3 +62,19 @@ func (ds *EurBtcRounded) Value() (uint64, error) {
 	satoshiValue := uint64(math.Floor((record.Value*1000000)+0.5)) * 100
 	return satoshiValue, nil
 }
+
+func (ds *EurBtcRounded) GetTxs() ([][]byte, error) {
+
+	return nil, nil
+}
+
+func (ds *EurBtcRounded) SetTx(txid []byte) error {
+
+	return nil
+}
+
+
+func (ds *EurBtcRounded) IsTxConfirmed(txid []byte) bool {
+
+	return true
+}

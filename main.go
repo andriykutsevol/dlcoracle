@@ -108,6 +108,7 @@ func main() {
 	r.HandleFunc("/api/datasource/{id}/value", routes.DataSourceValueHandler)
 	r.HandleFunc("/api/pubkey", routes.PubKeyHandler)
 	r.HandleFunc("/api/rpoint/{datasource}/{timestamp}", routes.RPointHandler)
+	r.HandleFunc("/api/eventrpoint/{data}", routes.EventRPointHandler)
 	r.HandleFunc("/api/publication/{R}", routes.PublicationHandler)
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static"))))
 
