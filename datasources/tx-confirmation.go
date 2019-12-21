@@ -6,9 +6,6 @@ import(
 )
 
 type TxConfirmation struct {
-
-	txids [][]byte
-
 } 
 
 
@@ -52,12 +49,12 @@ func (ds *TxConfirmation) GetTxs() ([][]byte, error) {
 		return nil, errors.New("GetTx: datasource typme must to be Event")
 	}
 
-	return ds.txids, nil
+	return gcfg.Txids, nil
 }
 
 func (ds *TxConfirmation) SetTx(txid []byte) error {
 
-	ds.txids = append(ds.txids, txid)
+	gcfg.Txids = append(gcfg.Txids, txid)
 
 	return nil
 }

@@ -10,6 +10,9 @@ import (
 	"github.com/gertjaap/dlcoracle/crypto"
 	"github.com/gertjaap/dlcoracle/logging"
 	"github.com/gertjaap/dlcoracle/store"
+
+	"fmt"
+	"os"
 )
 
 var lastPublished = uint64(0)
@@ -32,7 +35,7 @@ func ProcessPrice(ds datasources.Datasource, time uint64) error {
 
 	if time%ds.Interval() == 0 {
 
-		logging.Info.Printf("Publishing data source %d [ts: %d]\n", ds.Id(), time)
+		//logging.Info.Printf("Publishing data source %d [ts: %d]\n", ds.Id(), time)
 
 		valueToPublish, err := ds.Value()
 		if err != nil {
@@ -122,7 +125,7 @@ func ProcessEvent(ds datasources.Datasource, time uint64) error {
 				}
 
 				if publishedAlready {
-					logging.Info.Printf("Already published for data source %d and timestamp %d", ds.Id(), time)
+					//logging.Info.Printf("Already published for data source %d and timestamp %d", ds.Id(), time)
 					return nil
 				}
 				
@@ -141,6 +144,8 @@ func ProcessEvent(ds datasources.Datasource, time uint64) error {
 					logging.Error.Printf("Could not sign the message: %s", err.Error())
 					return nil
 				}
+
+				fmt.Printf("::%s:: publisher.go: ProcessEvent(): R %x, valueToPublish %d, signature %x \n", os.Args[2][len(os.Args[2])-4:], R, valueToPublish, signature)
 
 				store.Publish(R, valueToPublish, signature)				
 
